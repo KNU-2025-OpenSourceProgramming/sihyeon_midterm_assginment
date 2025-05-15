@@ -1,0 +1,64 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v2
+    
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.8'
+    
+    - name: Install Python dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install flask flask-cors flask_sock whisper soundfile torch
+    
+    - name: Set up Node.js
+      uses: actions/setup-node@v2
+      with:
+        node-version: '16'
+    
+    - name: Install Node.js dependencies
+      working-directory: ./frontend
+      run: npm install
+    
+    - name: Build React app
+      working-directory: ./frontend
+      run: npm run build
+    
+    - name: Set up Flask app
+      run: |
+        mkdir -p backend/www
+        cp -r frontend/build/* backend/www/
+    
+    - name: Install ngrok
+      run: |
+        wget https://bin.equinox.io/c/bNyj1mQVY4c/ngrok-v3-stable-linux-amd64.tgz
+        tar xvzf ngrok-v3-stable-linux-amd64.tgz
+        chmod +x ngrok
+    
+    - name: Start Flask app and expose with ngrok
+      env:
+        NGROK_AUTH_TOKEN: ${{ secrets.NGROK_AUTH_TOKEN }}
+      run: |
+        ./ngrok authtoken $NGROK_AUTH_TOKEN
+        cd backend
+        python -m flask run --host=0.0.0.0 &
+        sleep 5
+        ../ngrok http 5000 --log=stdout > ngrok.log &
+        sleep 5
+        NGROK_URL=$(grep -o 'https://.*\.ngrok-free\.app' ngrok.log | head -n 1)
+        echo "App is running at: $NGROK_URL"
+        echo "NGROK_URL=$NGROK_URL" >> $GITHUB_ENV
+        # Keep the action running for 5 minutes for testing
+        sleep 300
