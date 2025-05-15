@@ -1,3 +1,1 @@
-# Audio Transcription App - Backend
-
-Flask 서버와 Whisper 모델을 이용한 음성 인식 백엔드
+# 백엔드 기능 목록\n- WebSocket 오디오 스트리밍\n- Whisper 모델 음성 인식
