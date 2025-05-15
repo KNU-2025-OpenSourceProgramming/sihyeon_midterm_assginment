@@ -1,3 +1,1 @@
-# Audio Transcription App - Frontend
-
-React를 이용한 오디오 녹음 및 전송 인터페이스
+# 프론트엔드 기능 목록\n- 오디오 녹음 UI\n- WebSocket 데이터 전송\n- 실시간 결과 표시
